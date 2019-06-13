@@ -167,15 +167,11 @@ class DenseNet121_Modify():
 
     def get_model(self):
         base_model = load_densenet_model(self.use_imagenet_weights)
-        block3_out = base_model.get_layer("pool4_pool").output
-        out = Global_Average_Pooling(block3_out)
-        classifier1 = classifier_fn(out, self.num_labels, actv='softmax')
-
-        # block2_out = Global_Average_Pooling(base_model.get_layer("pool3_relu").output)
-        # block3_out = Global_Average_Pooling(base_model.get_layer("pool4_pool").output)
         model_out = base_model.layers[-1].output
+        out = dense_fn(model_out, 2048)
+        out = dropout_fn(out, 0.5)
         # concat = concat_fn([block2_out, block3_out, model_out], axis=1, name='Concatblocks234')
-        classifier = classifier_fn(layer=model_out, num_labels=self.num_labels, actv='softmax')
+        classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
 
         model = Model(inputs=base_model.input, outputs=[classifier])
         return model
