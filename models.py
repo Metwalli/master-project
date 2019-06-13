@@ -166,14 +166,16 @@ class DenseNet121_Modify():
         self.model = self.get_model()
 
     def get_model(self):
-        base_model = load_densenet_model(self.use_imagenet_weights)
+        base_model = load_densenet_model(self.use_imagenet_weights, pooling=None)
         block3_out = base_model.get_layer("pool4_relu").output
         out = conv_layer(block3_out, 1024, 1, 1)
+        out = Max_pooling(out, 2, 2)
+        out = concat_fn([out, base_model.layers[-1]], axis=3)
         out = Global_Average_Pooling(out)
         classifier = classifier_fn(out, self.num_labels, actv='softmax')
 
         # block2_out = Global_Average_Pooling(base_model.get_layer("pool3_relu").output)
-        # block3_out = Global_Average_Pooling(base_model.get_layer("pool4_relu").output)
+        # block3_out = Global_Average_Pooling(base_model.get_layer("pool4_pool").output)
         # model_out = base_model.layers[-1].output
         #
         # concat = concat_fn([block2_out, block3_out, model_out], axis=1, name='Concatblocks234')
