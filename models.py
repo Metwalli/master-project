@@ -167,37 +167,18 @@ class DenseNet121_Modify():
 
     def get_model(self):
         base_model = load_densenet_model(self.use_imagenet_weights)
-        out = base_model.get_layer("pool4_pool").output
-        for i in range(1, 12):
-            out = self.conv_block(out, 32, "block5")
-        # out = dropout_fn(base_model.layers[-1].output, 0.5)
-        out = Global_Average_Pooling(out)
-        classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
+        block3_out = base_model.get_layer("pool4_pool").output
+        out = Global_Average_Pooling(block3_out)
+        classifier1 = classifier_fn(out, self.num_labels, actv='softmax')
+
+        # block2_out = Global_Average_Pooling(base_model.get_layer("pool3_relu").output)
+        # block3_out = Global_Average_Pooling(base_model.get_layer("pool4_pool").output)
+        model_out = base_model.layers[-1].output
+        # concat = concat_fn([block2_out, block3_out, model_out], axis=1, name='Concatblocks234')
+        classifier = classifier_fn(layer=model_out, num_labels=self.num_labels, actv='softmax')
 
         model = Model(inputs=base_model.input, outputs=[classifier])
         return model
-
-    def conv_block(self, x, growth_rate, name):
-        """A building block for a dense block.
-
-        # Arguments
-            x: input tensor.
-            growth_rate: float, growth rate at dense layers.
-            name: string, block label.
-
-        # Returns
-            Output tensor for the block.
-        """
-        bn_axis = 3 if image_data_format() == 'channels_last' else 1
-        x1 = BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
-                                       name=name + '_1_bn')(x)
-        x1 = Activation('relu', name=name + '_1_relu')(x1)
-        x1 = Conv2D(growth_rate, 3,
-                           padding='same',
-                           use_bias=False,
-                           name=name + '_2_conv')(x1)
-        x = Concatenate(axis=bn_axis, name=name + '_concat')([x, x1])
-        return x
 
 
 # InceptionResnet Model
