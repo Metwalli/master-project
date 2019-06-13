@@ -1,28 +1,20 @@
 # organize imports
 from __future__ import print_function
-import keras.applications.inception_resnet_v2
-import pandas as pd
-import tensorflow as tf
+
 import matplotlib.pyplot as plt
 import argparse
 from keras.optimizers import Adam, SGD
-from keras.preprocessing.image import img_to_array
 from keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras.callbacks import TensorBoard
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.models import load_model
-from keras.losses import categorical_crossentropy
 import time
 import os
-import cv2
-import numpy as np
-from sklearn.preprocessing import LabelBinarizer
 import math
 
 # from dense_inception import DenseNetInception
-from dense_inception_concat import DenseNetInceptionInject, DenseNetBaseModel, DenseNetInceptionResnetModel,\
-    InceptionResNetModel, DensenetWISeRModel, DensenetWISeR_Impreved_Model, DenseNetDenseInception,\
-    DenseNet121_Modify
+from models import DenseNetBaseModel, DenseNetInceptionResnetModel, InceptionResNetModel, \
+    DensenetWISeRModel, DenseNet121_Modify
 
 from utils import Params
 from loss_history import LossHistory
@@ -40,36 +32,6 @@ ap.add_argument("-r", "--restore_from", required=False,
 ap.add_argument("-p", "--plot", type=str, default="plot.png",
                 help="path to output accuracy/loss plot")
 args = vars(ap.parse_args())
-
-# initialize the number of epochs to train for, initial learning rate,
-# batch size, and image dimensions
-
-def load_dataset(imagePaths):
-    data = []
-    labels = []
-    # loop over the input images
-    for imagePath in imagePaths:
-        # load the image, pre-process it, and store it in the data list
-        image = cv2.imread(imagePath)
-        image = cv2.resize(image, (INPUT1_DIMS[1], INPUT1_DIMS[0]))
-        image = img_to_array(image)
-        data.append(image)
-        # extract the class label from the image path and update the
-        # labels list
-        label = imagePath.split(os.path.sep)[-2]
-        labels.append(label)
-
-    # scale the raw pixel intensities to the range [0, 1]
-    data = np.array(data, dtype="float") / 255.0
-    labels = np.array(labels)
-    print("[INFO] data matrix: {:.2f}MB".format(
-        data.nbytes / (1024 * 1000.0)))
-
-    # binarize the labels
-    lb = LabelBinarizer()
-    labels = lb.fit_transform(labels)
-
-    return data, labels, lb
 
 # Arguments
 data_dir = args["data_dir"]
@@ -155,14 +117,8 @@ if restore_from is None:
         model = InceptionResNetModel(num_labels=CLASSES, use_imagenet_weights=use_imagenet_weights).model
     elif model_name == 'concat':
         model = DenseNetInceptionResnetModel(CLASSES, use_imagenet_weights).model
-    elif model_name == 'wiser':
-        model = DensenetWISeRModel(CLASSES, use_imagenet_weights).model
-    elif model_name == 'wiser_improve':
-        model = DensenetWISeR_Impreved_Model(CLASSES, use_imagenet_weights).model
-    elif model_name == 'dense_incep':
-        model = DenseNetDenseInception(params).model
     else:
-        model = DenseNetInceptionInject(num_labels=CLASSES, use_imagenet_weights=use_imagenet_weights).model
+        model = DensenetWISeRModel(CLASSES, use_imagenet_weights).model
 else:
     # Restore Model
     file_path = os.path.join(restore_from)
@@ -179,12 +135,14 @@ def cosine_decay(epoch):
     initial_lrate = INIT_LR
     lrate = 0.5 * initial_lrate * (1 + math.cos(epoch*math.pi/EPOCHS))
     return lrate
+
 def step_decay(epoch):
     initial_lrate = INIT_LR
     drop = 0.5
     epochs_drop = 10.0
     lrate = initial_lrate * math.pow(drop, math.floor((1+epoch)/epochs_drop))
     return lrate
+
 if params.decay == 'step':
     lrate = LearningRateScheduler(step_decay)
 else:

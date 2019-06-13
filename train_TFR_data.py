@@ -22,7 +22,7 @@ import numpy as np
 import argparse
 
 from tensorflow.python.keras.callbacks import TensorBoard
-from dense_inception_concat import DenseNetInceptionConcat, DenseNetBaseModel, DenseNetInception
+from models import DenseNetInceptionConcat, DenseNetBaseModel, DenseNetInception
 from utils import Params
 from loss_history import LossHistory
 from input_fn import input_fn
