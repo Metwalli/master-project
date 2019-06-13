@@ -85,7 +85,7 @@ def Average_pooling(x, pool_size=[2, 2], stride=2, name=None):
     return AveragePooling2D(pool_size, strides=stride, name=name)(x)
 
 
-def Max_Pooling(x, pool_size=[3, 3], stride=2, padding='SAME', name=None):
+def Max_pooling(x, pool_size=[3, 3], stride=2, padding='SAME', name=None):
     return MaxPooling2D(pool_size=pool_size, strides=stride, padding=padding, name=name)(x)
 
 
@@ -167,18 +167,19 @@ class DenseNet121_Modify():
 
     def get_model(self):
         base_model = load_densenet_model(self.use_imagenet_weights)
-        block3_out = base_model.get_layer("pool4_relu").output
-        out = conv_layer(block3_out, 1024, 3, 1)
-        out = Average_pooling(out, 2, 2, "block_out_pool")
-        out = Global_Average_Pooling(out)
-        classifier1 = classifier_fn(out, self.num_labels, actv='softmax1')
-        # block3_out = base_model.get_layer("pool4_conv ").output
-        # out = Global_Average_Pooling(block3_out)
-        # classifier1 = classifier_fn(out, self.num_labels, actv='softmax1')
-        #
-        # out = base_model.layers[-1].output
-        # classifier2 = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax2')
-        model = Model(inputs=base_model.input, outputs=[classifier1])
+        # block3_out = base_model.get_layer("pool4_relu").output
+        # out = conv_layer(block3_out, 1024, 3, 1)
+        # out = Global_Average_Pooling(out)
+        # classifier1 = classifier_fn(out, self.num_labels, actv='softmax')
+
+        block2_out = Global_Average_Pooling(base_model.get_layer("pool3_relu").output)
+        block3_out = Global_Average_Pooling(base_model.get_layer("pool4_relu").output)
+        model_out = base_model.layers[-1].output
+
+        concat = concat_fn([block2_out, block3_out, model_out], axis=1, name='Concatblocks234')
+        classifier = classifier_fn(layer=concat, num_labels=self.num_labels, actv='softmax')
+
+        model = Model(inputs=base_model.input, outputs=[classifier])
         return model
 
 
@@ -210,7 +211,7 @@ class DensenetWISeRModel():
         # slice_input = dense_model.layers[0].output
         slice_input = Input(shape=(224, 224, 3))
         x = conv2d_bn(slice_input, 320, 224, 5, 'valid')
-        x = Max_Pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
+        x = Max_pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
         out = Global_Average_Pooling(x)
 
         # combine densenet with Slice Branch
@@ -295,7 +296,7 @@ class DensenetWISeRModel():
 
         # slice_input = img_input
         x = conv2d_bn(slice_input, 320, 224, 5, 'valid')
-        x = Max_Pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
+        x = Max_pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
 
         x = self.dense_block(x, blocks[0], name='conv2')
         x = self.transition_block(x, 0.5, name='pool2_')
@@ -328,7 +329,7 @@ class DensenetWISeRModel():
         densenet_out = dense_model.layers[-1].output
         slice_input = dense_model.layers[0].output
         x = conv2d_bn(slice_input, 320, 224, 5, 'valid')
-        x = Max_Pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
+        x = Max_pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
 
         x = GlobalAveragePooling2D(name='avg_pool_')(x)
 
