@@ -230,7 +230,7 @@ class DenseNetProposed():
         x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
                           use_bias=False,
                           name=name + '_conv')(x)
-        x = AveragePooling2D(2, strides=2, name=name + '_pool')(x)
+        x = MaxPooling2D(2, strides=2, name=name + '_pool')(x)
         return x
 
     def conv_block(self, x, growth_rate, name):
