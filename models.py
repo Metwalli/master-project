@@ -209,7 +209,7 @@ class DenseNetProposed():
             output tensor for the block.
         """
         for i in range(blocks):
-            x = self.conv_block(x, 32, name=name + '_block_' + str(i + 1))
+            x = self.conv_block(x, 32, name=name + '_block' + str(i + 1))
         return x
 
     def transition_block(self, x, reduction, name):
@@ -230,9 +230,8 @@ class DenseNetProposed():
         x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
                           use_bias=False,
                           name=name + '_conv')(x)
-        x = MaxPooling2D([1, 2], strides=2, name=name + '_pool')(x)
+        x = AveragePooling2D(2, strides=2, name=name + '_pool')(x)
         return x
-
 
     def conv_block(self, x, growth_rate, name):
         """A building block for a dense block.
@@ -246,11 +245,17 @@ class DenseNetProposed():
             Output tensor for the block.
         """
         bn_axis = 3 if image_data_format() == 'channels_last' else 1
-
+        x1 = BatchNormalization(axis=bn_axis,
+                                       epsilon=1.001e-5,
+                                       name=name + '_0_bn')(x)
+        x1 = Activation('elu', name=name + '_0_elu')(x1)
+        x1 = Conv2D(4 * growth_rate, 1,
+                           use_bias=False,
+                           name=name + '_1_conv')(x1)
         x1 = BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
-                                       name=name + '_1_bn')(x)
+                                       name=name + '_1_bn')(x1)
         x1 = Activation('elu', name=name + '_1_elu')(x1)
-        x1 = Conv2D(growth_rate, [1, 3],
+        x1 = Conv2D(growth_rate, 3,
                            padding='same',
                            use_bias=False,
                            name=name + '_2_conv')(x1)
@@ -287,7 +292,7 @@ class DenseNetProposed():
         x = GlobalAveragePooling2D(name='avg_pool_')(x)
 
 
-        x = classifier_fn(x, self.num_labels, actv='softmax')(x)
+        x = classifier_fn(x, self.num_labels, actv='softmax')
 
         model = Model(img_input, x, name='densenet')
 
