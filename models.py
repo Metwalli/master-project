@@ -193,9 +193,9 @@ class InceptionResNetModel():
         return model
 
 class DenseNetProposed():
-    def __init__(self, num_labels):
+    def __init__(self, num_labels, num_layers_per_block):
         self.num_labels = num_labels
-        self.model = self.DenseNet([6, 12, 24, 16])
+        self.model = self.DenseNet(num_layers_per_block)
 
     def dense_block(self, x, blocks, name):
         """A dense block.

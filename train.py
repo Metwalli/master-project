@@ -50,6 +50,7 @@ LOSS_FN = params.loss_fn
 EPOCHS = params.num_epochs
 INIT_LR = params.learning_rate
 BS = params.batch_size
+num_layers_per_block = params.num_layers_per_block
 INPUT1_DIMS = (params.image1_size, params.image1_size, 3)
 INPUT2_DIMS = (params.image2_size, params.image2_size, 3)
 seed      = 2019
@@ -118,7 +119,7 @@ if restore_from is None:
     elif model_name == 'concat':
         model = DenseNetInceptionResnetModel(CLASSES, use_imagenet_weights).model
     else:
-        model = DenseNetProposed(CLASSES).model
+        model = DenseNetProposed(CLASSES, num_layers_per_block).model
 else:
     # Restore Model
     file_path = os.path.join(restore_from)
