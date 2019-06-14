@@ -3,6 +3,7 @@ import tensorflow as tf
 from keras.layers import Conv2D, Dense, Flatten, Input, BatchNormalization, ZeroPadding2D, \
     Activation, AveragePooling2D, MaxPooling2D, GlobalAveragePooling2D, Dropout, Concatenate, GlobalMaxPooling2D
 from keras.models import Model
+from keras.activations import elu
 from keras.backend import image_data_format, int_shape
 from keras.applications.densenet import DenseNet121
 from keras.applications.inception_v3 import InceptionV3
@@ -191,30 +192,10 @@ class InceptionResNetModel():
         model = Model(inputs=base_model.input, outputs=classifier)
         return model
 
-class DensenetWISeRModel():
-    def __init__(self, num_labels, use_imagenet_weights=True):
+class DenseNetProposed():
+    def __init__(self, num_labels):
         self.num_labels = num_labels
-        self.use_imagenet_weights = use_imagenet_weights
-        self.model = self.get_model()
-
-    def get_model1(self):
-        # dense_model = load_densenet_model(self.use_imagenet_weights)
-        # densenet_out = dense_model.layers[-1].output
-
-        # Add Slice Branch
-        # slice_input = dense_model.layers[0].output
-        slice_input = Input(shape=(224, 224, 3))
-        x = conv2d_bn(slice_input, 320, 224, 5, 'valid')
-        x = Max_pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
-        out = Global_Average_Pooling(x)
-
-        # combine densenet with Slice Branch
-        # out = concat_fn([densenet_out, slice_out], axis=1)
-        out = dense_fn(out, 2048)
-        out = dense_fn(out, 2048)
-        classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
-        model = Model(inputs=slice_input, outputs=classifier)
-        return model
+        self.model = self.DenseNet([6, 12, 24, 16])
 
     def dense_block(self, x, blocks, name):
         """A dense block.
@@ -245,11 +226,11 @@ class DensenetWISeRModel():
         bn_axis = 3 if image_data_format() == 'channels_last' else 1
         x = BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                       name=name + '_bn')(x)
-        x = Activation('relu', name=name + '_relu')(x)
+        x = Activation('elu', name=name + '_elu')(x)
         x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
                           use_bias=False,
                           name=name + '_conv')(x)
-        x = AveragePooling2D([1,2], strides=2, name=name + '_pool')(x)
+        x = MaxPooling2D([1, 2], strides=2, name=name + '_pool')(x)
         return x
 
 
@@ -268,7 +249,7 @@ class DensenetWISeRModel():
 
         x1 = BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                        name=name + '_1_bn')(x)
-        x1 = Activation('relu', name=name + '_1_relu')(x1)
+        x1 = Activation('elu', name=name + '_1_elu')(x1)
         x1 = Conv2D(growth_rate, [1, 3],
                            padding='same',
                            use_bias=False,
@@ -276,62 +257,39 @@ class DensenetWISeRModel():
         x = Concatenate(axis=bn_axis, name=name + '_concat')([x, x1])
         return x
 
-    def DenseNet(self, blocks,
-                 input_shape=(224, 224, 3),
-                 classes=172):
+    def DenseNet(self, blocks, input_shape=(224, 224, 3)):
 
-        # img_input = Input(shape=input_shape)
+        img_input = Input(shape=input_shape)
 
         bn_axis = 3 if image_data_format() == 'channels_last' else 1
 
-        dense_model = load_densenet_model(self.use_imagenet_weights)
-        densenet_out = dense_model.layers[-1].output
-        slice_input = dense_model.layers[0].output
-
-        # slice_input = img_input
-        x = conv2d_bn(slice_input, 320, 224, 5, 'valid')
-        x = Max_pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
+        x = ZeroPadding2D(padding=((3, 3), (3, 3)))(img_input)
+        x = Conv2D(64, 7, strides=2, use_bias=False, name='conv1/conv')(x)
+        x = BatchNormalization(
+            axis=bn_axis, epsilon=1.001e-5, name='conv1/bn')(x)
+        x = Activation('elu', name='conv1/elu')(x)
+        x = ZeroPadding2D(padding=((1, 1), (1, 1)))(x)
+        x = MaxPooling2D(3, strides=2, name='pool1')(x)
 
         x = self.dense_block(x, blocks[0], name='conv2')
-        x = self.transition_block(x, 0.5, name='pool2_')
+        x = self.transition_block(x, 0.5, name='pool2')
         x = self.dense_block(x, blocks[1], name='conv3')
-        x = self.transition_block(x, 0.5, name='pool3_')
+        x = self.transition_block(x, 0.5, name='pool3')
         x = self.dense_block(x, blocks[2], name='conv4')
-        x = self.transition_block(x, 0.5, name='pool4_')
+        x = self.transition_block(x, 0.5, name='pool4')
         x = self.dense_block(x, blocks[3], name='conv5')
 
         x = BatchNormalization(
-            axis=bn_axis, epsilon=1.001e-5, name='bn_')(x)
-        x = Activation('relu', name='relu_')(x)
+            axis=bn_axis, epsilon=1.001e-5, name='bn')(x)
+        x = Activation('elu', name='elu')(x)
 
 
         x = GlobalAveragePooling2D(name='avg_pool_')(x)
 
-        x = concat_fn([x, densenet_out], 1)
 
-        x = Dense(classes, activation='softmax', name='fc172')(x)
-        inputs = dense_model.input
+        x = classifier_fn(x, self.num_labels, actv='softmax')(x)
 
-        model = Model(inputs, x, name='densenet')
+        model = Model(img_input, x, name='densenet')
 
-        return model
-
-
-    def get_model(self):
-
-        dense_model = load_densenet_model(self.use_imagenet_weights)
-        densenet_out = dense_model.layers[-1].output
-        slice_input = dense_model.layers[0].output
-        x = conv2d_bn(slice_input, 320, 224, 5, 'valid')
-        x = Max_pooling(x=x, pool_size=[1, 5], stride=3, padding='valid', name=None)
-
-        x = GlobalAveragePooling2D(name='avg_pool_')(x)
-
-        x = concat_fn([x, densenet_out], 1)
-
-        x = Dense(self.num_labels, activation='softmax', name='fc172')(x)
-
-        model = Model(dense_model.input, x, name='densenet')
-        # model = self.DenseNet([6, 12, 24, 16], classes=self.num_labels)
         return model
 

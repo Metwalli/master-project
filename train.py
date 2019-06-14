@@ -14,7 +14,7 @@ import math
 
 # from dense_inception import DenseNetInception
 from models import DenseNetBaseModel, DenseNetInceptionResnetModel, InceptionResNetModel, \
-    DensenetWISeRModel, DenseNet121_Modify
+    DenseNetProposed, DenseNet121_Modify
 
 from utils import Params
 from loss_history import LossHistory
@@ -118,7 +118,7 @@ if restore_from is None:
     elif model_name == 'concat':
         model = DenseNetInceptionResnetModel(CLASSES, use_imagenet_weights).model
     else:
-        model = DensenetWISeRModel(CLASSES, use_imagenet_weights).model
+        model = DenseNetProposed(CLASSES).model
 else:
     # Restore Model
     file_path = os.path.join(restore_from)
