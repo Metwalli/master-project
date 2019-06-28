@@ -13,8 +13,7 @@ import os
 import math
 
 # from dense_inception import DenseNetInception
-from models import DenseNetBaseModel, DenseNetInceptionResnetModel, InceptionResNetModel, \
-    DenseNetProposed, DenseNet121_Modify
+from models import DenseNetBaseModel, InceptionResNetModel, VGG19Model, RestNet50Model, DenseFoodModel
 
 from utils import Params
 from loss_history import LossHistory
@@ -112,14 +111,14 @@ else:
 if restore_from is None:
     if model_name == 'densenet':
         model = DenseNetBaseModel(CLASSES, use_imagenet_weights).model
-    elif model_name == "densenet_m":
-        model = DenseNet121_Modify(CLASSES).model
     elif model_name == "incep_resnet":
         model = InceptionResNetModel(num_labels=CLASSES, use_imagenet_weights=use_imagenet_weights).model
-    elif model_name == 'concat':
-        model = DenseNetInceptionResnetModel(CLASSES, use_imagenet_weights).model
+    elif model_name == 'vgg':
+        model = VGG19Model(CLASSES, use_imagenet_weights).model
+    elif model_name == "resnet":
+        model = RestNet50Model(CLASSES, use_imagenet_weights).model
     else:
-        model = DenseNetProposed(CLASSES, num_layers_per_block).model
+        model = DenseFoodModel(CLASSES, num_layers_per_block).model
 else:
     # Restore Model
     file_path = os.path.join(restore_from)

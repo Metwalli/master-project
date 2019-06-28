@@ -6,6 +6,8 @@ from keras.models import Model
 from keras.activations import elu
 from keras.backend import image_data_format, int_shape
 from keras.applications.densenet import DenseNet121
+from keras.applications.resnet50 import ResNet50
+from keras.applications.vgg19 import VGG19
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.utils import plot_model
@@ -120,25 +122,46 @@ def load_inceptionresnet_model(use_weights, pooling='avg', input_tensor=None):
     base_model = InceptionResNetV2(include_top=False, weights=weights, input_tensor=input_tensor,
                              input_shape=(299, 299, 3), pooling=pooling)
     return base_model
+def load_VGG_model(use_weights, pooling=None, input_tensor=None):
+    weights = 'imagenet' if use_weights == True else None
+    base_model = VGG19(include_top=False, weights=weights, input_tensor=input_tensor,
+                             input_shape=(224, 224, 3), pooling=pooling)
+    return base_model
+def load_ResNet_model(use_weights, pooling='avg', input_tensor=None):
+    weights = 'imagenet' if use_weights == True else None
+    base_model = ResNet50(include_top=False, weights=weights, input_tensor=input_tensor,
+                             input_shape=(299, 299, 3), pooling=pooling)
+    return base_model
 
-class DenseNetInceptionResnetModel():
+# VGG19 Base Model
+class VGG19Model():
     def __init__(self, num_labels, use_imagenet_weights=True):
         self.num_labels = num_labels
         self.use_imagenet_weights = use_imagenet_weights
         self.model = self.get_model()
 
     def get_model(self):
-        dense_model = load_densenet_model(self.use_imagenet_weights, pooling='avg')
-        dense_out = dense_model.layers[-1].output
-        dense_input = dense_model.layers[0].output
-        inception_model = load_inceptionresnet_model(self.use_imagenet_weights, pooling='avg', input_tensor=dense_input)
-        inception_out = inception_model.layers[-1].output
-        out = concat_fn([dense_out, inception_out], 1)
+        base_model = load_VGG_model(self.use_imagenet_weights)
+        out = base_model.layers[-1].output
         classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
-        model = Model(inputs=dense_model.input, outputs=classifier)
+        model = Model(inputs=base_model.input, outputs=classifier)
         return model
 
-# Base Model
+# VGG19 Base Model
+class RestNet50Model():
+    def __init__(self, num_labels, use_imagenet_weights=True):
+        self.num_labels = num_labels
+        self.use_imagenet_weights = use_imagenet_weights
+        self.model = self.get_model()
+
+    def get_model(self):
+        base_model = load_ResNet_model(self.use_imagenet_weights)
+        out = base_model.layers[-1].output
+        classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
+        model = Model(inputs=base_model.input, outputs=classifier)
+        return model
+
+# DenseNet121 Base Model
 class DenseNetBaseModel():
     def __init__(self, num_labels, use_imagenet_weights=True):
         self.num_labels = num_labels
@@ -147,12 +170,6 @@ class DenseNetBaseModel():
 
     def get_model(self):
         base_model = load_densenet_model(self.use_imagenet_weights)
-        # Freeze high layers in densent model
-        # for layer in base_model.layers:
-        #     layer.trainable = False
-        #     if layer.name == 'pool2_relu':
-        #         break
-
         out = base_model.layers[-1].output
         classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
         model = Model(inputs=base_model.input, outputs=classifier)
@@ -192,7 +209,7 @@ class InceptionResNetModel():
         model = Model(inputs=base_model.input, outputs=classifier)
         return model
 
-class DenseNetProposed():
+class DenseFoodModel():
     def __init__(self, num_labels, num_layers_per_block):
         self.num_labels = num_labels
         self.model = self.DenseNet(num_layers_per_block)
