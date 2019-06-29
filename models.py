@@ -7,7 +7,7 @@ from keras.activations import elu
 from keras.backend import image_data_format, int_shape
 from keras.applications.densenet import DenseNet121
 from keras.applications.resnet50 import ResNet50
-from keras.applications.vgg19 import VGG19
+from keras.applications.vgg16 import VGG16
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.utils import plot_model
@@ -117,24 +117,38 @@ def load_densenet_model(use_weights, pooling='avg'):
                              input_shape=(224, 224, 3), pooling=pooling)
     return base_model
 
-def load_inceptionresnet_model(use_weights, pooling='avg', input_tensor=None):
+def load_inceptionv3_model(use_weights, pooling='avg', input_tensor=None):
     weights = 'imagenet' if use_weights == True else None
-    base_model = InceptionResNetV2(include_top=False, weights=weights, input_tensor=input_tensor,
+    base_model = InceptionV3(include_top=False, weights=weights, input_tensor=input_tensor,
                              input_shape=(299, 299, 3), pooling=pooling)
     return base_model
 def load_VGG_model(use_weights, pooling=None, input_tensor=None):
     weights = 'imagenet' if use_weights == True else None
-    base_model = VGG19(include_top=False, weights=weights, input_tensor=input_tensor,
+    base_model = VGG16(include_top=True, weights=weights, input_tensor=input_tensor,
                              input_shape=(224, 224, 3), pooling=pooling)
     return base_model
 def load_ResNet_model(use_weights, pooling='avg', input_tensor=None):
     weights = 'imagenet' if use_weights == True else None
     base_model = ResNet50(include_top=False, weights=weights, input_tensor=input_tensor,
-                             input_shape=(299, 299, 3), pooling=pooling)
+                             input_shape=(224, 224, 3), pooling=pooling)
     return base_model
 
+# Inception v3 Model
+class Inceptionv3Model():
+    def __init__(self, num_labels, use_imagenet_weights=True):
+        self.num_labels = num_labels
+        self.use_imagenet_weights = use_imagenet_weights
+        self.model = self.get_model()
+
+    def get_model(self):
+        base_model = load_inceptionv3_model(self.use_imagenet_weights, pooling='avg')
+        out = base_model.layers[-1].output
+        classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
+        model = Model(inputs=base_model.input, outputs=classifier)
+        return model
+
 # VGG19 Base Model
-class VGG19Model():
+class VGGModel():
     def __init__(self, num_labels, use_imagenet_weights=True):
         self.num_labels = num_labels
         self.use_imagenet_weights = use_imagenet_weights
@@ -142,13 +156,13 @@ class VGG19Model():
 
     def get_model(self):
         base_model = load_VGG_model(self.use_imagenet_weights)
-        out = base_model.layers[-1].output
+        out = base_model.layers[-2].output
         classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
         model = Model(inputs=base_model.input, outputs=classifier)
         return model
 
-# VGG19 Base Model
-class RestNet50Model():
+# ResNet50 Base Model
+class RestNetModel():
     def __init__(self, num_labels, use_imagenet_weights=True):
         self.num_labels = num_labels
         self.use_imagenet_weights = use_imagenet_weights
@@ -195,20 +209,6 @@ class DenseNet121_Modify():
         return model
 
 
-# InceptionResnet Model
-class InceptionResNetModel():
-    def __init__(self, num_labels, use_imagenet_weights=True):
-        self.num_labels = num_labels
-        self.use_imagenet_weights = use_imagenet_weights
-        self.model = self.get_model()
-
-    def get_model(self):
-        base_model = load_inceptionresnet_model(self.use_imagenet_weights)
-        out = base_model.layers[-1].output
-        classifier = classifier_fn(layer=out, num_labels=self.num_labels, actv='softmax')
-        model = Model(inputs=base_model.input, outputs=classifier)
-        return model
-
 class DenseFoodModel():
     def __init__(self, num_labels, num_layers_per_block):
         self.num_labels = num_labels
@@ -244,9 +244,13 @@ class DenseFoodModel():
         x = BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                       name=name + '_bn')(x)
         x = Activation('elu', name=name + '_elu')(x)
-        x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
-                          use_bias=False,
-                          name=name + '_conv')(x)
+        x = Conv2D(int(int_shape(x)[bn_axis]), 1,
+                   use_bias=False,
+                   name=name + '_conv')(x)
+        x = dropout_fn(x, 0.5)
+        # x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
+        #                   use_bias=False,
+        #                   name=name + '_conv')(x)
         x = MaxPooling2D(2, strides=2, name=name + '_pool')(x)
         return x
 
