@@ -180,23 +180,3 @@ history = model.fit_generator(
 # save the model to disk
 print("Saved model to disk")
 model.save(os.path.join(model_dir, "last.weights.hdf5"))
-
-# plot the training Accuracy and loss
-
-plt.plot(loss_history.history["acc"])
-plt.plot(loss_history.history["val_acc"])
-plt.title("Model Accuracy")
-plt.xlabel("Epoch #")
-plt.ylabel("Accuracy")
-plt.legend(['Train', 'Validation'], loc="upper left")
-plt.savefig(os.path.join(model_dir, "accuracy_plot.png"))
-plt.show()
-
-plt.plot(loss_history.history["loss"])
-plt.plot(loss_history.history["val_loss"])
-plt.title("Model Loss")
-plt.xlabel("Epoch #")
-plt.ylabel("Loss")
-plt.legend(['Train', 'Validation'], loc="upper left")
-plt.savefig(os.path.join(model_dir, "loss_plot.png"))
-plt.show()
