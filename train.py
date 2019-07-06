@@ -117,8 +117,10 @@ if restore_from is None:
         model = VGGModel(CLASSES, use_imagenet_weights).model
     elif model_name == "resnet":
         model = RestNetModel(CLASSES, use_imagenet_weights).model
-    else:
+    elif model_name == "densefood":
         model = DenseFoodModel(CLASSES, num_layers_per_block).model
+    else:
+        assert False, "Cannot find the model name on the list"
 else:
     # Restore Model
     file_path = os.path.join(restore_from)
