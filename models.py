@@ -190,8 +190,7 @@ class DenseNetBaseModel():
         return model
 
 # Densenet Modify
-from keras.utils.np_utils import to_categorical
-to_
+
 class DenseNet121_Modify():
     def __init__(self, num_labels, use_imagenet_weights=True):
         self.num_labels = num_labels
