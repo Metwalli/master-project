@@ -10,7 +10,8 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.models import load_model
 import time
 import os
-
+import tensorflow as tf
+import keras.backend as K
 import math
 
 # from dense_inception import DenseNetInception
@@ -38,8 +39,11 @@ data_dir = args["data_dir"]
 model_dir = args["model_dir"]
 restore_from = args["restore_from"]
 
-os.environ["CUDA_VISIBLE_DEVICES"]="6"
-
+# os.environ["CUDA_VISIBLE_DEVICES"]="6"
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+sess = tf.Session(config=config)
+K.set_session(sess)
 # load the user configs
 
 params = Params(os.path.join(model_dir, 'params.json'))
