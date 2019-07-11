@@ -24,14 +24,14 @@ from loss_fn import get_center_loss, get_softmax_loss, get_total_loss
 
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-d", "--data_dir", required=False,
+ap.add_argument("-d", "--data_dir", required=True,
                 help="path to input dataset (i.e., directory of images)")
-ap.add_argument("-m", "--model_dir", required=False,
+ap.add_argument("-m", "--model_dir", required=True,
                 help="path to Model config (i.e., directory of Model)")
 ap.add_argument("-r", "--restore_from", required=False,
                 help="path of saved checkpoints (i.e., directory of check points)")
-ap.add_argument("-p", "--plot", type=str, default="plot.png",
-                help="path to output accuracy/loss plot")
+ap.add_argument("-g", "--gpu", type=str, default=0, required= False,
+                help="Choose the GPU 0,1 etc. to train the model")
 args = vars(ap.parse_args())
 
 # Arguments
@@ -39,11 +39,17 @@ data_dir = args["data_dir"]
 model_dir = args["model_dir"]
 restore_from = args["restore_from"]
 
-# os.environ["CUDA_VISIBLE_DEVICES"]="6"
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-sess = tf.Session(config=config)
-K.set_session(sess)
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+if args["gpu"] is None:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+else:
+    os.environ["CUDA_VISIBLE_DEVICES"] = args["gpu"]
+
+# config = tf.ConfigProto()
+# config.gpu_options.allow_growth = True
+# sess = tf.Session(config=config)
+# K.set_session(sess)
+
 # load the user configs
 
 params = Params(os.path.join(model_dir, 'params.json'))
