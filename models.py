@@ -190,7 +190,8 @@ class DenseNetBaseModel():
         return model
 
 # Densenet Modify
-
+from keras.utils.np_utils import to_categorical
+to_
 class DenseNet121_Modify():
     def __init__(self, num_labels, use_imagenet_weights=True):
         self.num_labels = num_labels
@@ -226,7 +227,7 @@ class DenseFoodModel():
             output tensor for the block.
         """
         for i in range(blocks):
-            x = self.conv_block(x, 64, name=name + '_block' + str(i + 1))
+            x = self.conv_block(x, 32, name=name + '_block' + str(i + 1))
         return x
 
     def transition_block(self, x, reduction, name):

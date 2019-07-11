@@ -10,6 +10,7 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.models import load_model
 import time
 import os
+os.environ["CUDA_VISIBLE_DEVICES"]="6";
 import math
 
 # from dense_inception import DenseNetInception
