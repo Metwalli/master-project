@@ -10,7 +10,7 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.models import load_model
 import time
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="6";
+
 import math
 
 # from dense_inception import DenseNetInception
@@ -38,6 +38,7 @@ data_dir = args["data_dir"]
 model_dir = args["model_dir"]
 restore_from = args["restore_from"]
 
+os.environ["CUDA_VISIBLE_DEVICES"]="6"
 
 # load the user configs
 
