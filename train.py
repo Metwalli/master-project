@@ -187,8 +187,8 @@ history = model.fit_generator(
         initial_epoch=loss_history.get_initial_epoch(),
         epochs=EPOCHS,
         validation_data=single_validation_generator,
-        validation_steps=single_validation_generator.n // BS,
-        callbacks=[best_checkpoint, last_checkpoint, loss_history, lrate])
+        validation_steps=single_validation_generator.n // BS)
+        # callbacks=[best_checkpoint, last_checkpoint, loss_history, lrate])
 
 
 # save the model to disk
