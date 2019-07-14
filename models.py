@@ -244,13 +244,9 @@ class DenseFoodModel():
         x = BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                       name=name + '_bn')(x)
         x = Activation('elu', name=name + '_elu')(x)
-        x = Conv2D(int(int_shape(x)[bn_axis]), 1,
-                   use_bias=False,
-                   name=name + '_conv')(x)
-        x = dropout_fn(x, 0.5)
-        # x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
-        #                   use_bias=False,
-        #                   name=name + '_conv')(x)
+        x = Conv2D(int(int_shape(x)[bn_axis] * reduction), 1,
+                          use_bias=False,
+                          name=name + '_conv')(x)
         x = MaxPooling2D(2, strides=2, name=name + '_pool')(x)
         return x
 
