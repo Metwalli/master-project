@@ -15,9 +15,10 @@ def _center_loss_func(features, labels, alpha, num_classes):
     centers = K.zeros([num_classes, feature_dim])
     labels = tf.argmax(labels, axis=1)
     labels = tf.to_int32(labels)
-    centers_batch = tf.gather(centers, labels)
+    centers_batch = K.gather(centers, labels)
     diff = (1 - alpha) * (centers_batch - features)
     centers = tf.scatter_sub(centers, labels, diff)
+    centers_batch = K.gather(centers, labels)
     loss = tf.reduce_mean(K.square(features - centers_batch))
     return loss
 

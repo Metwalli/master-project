@@ -93,13 +93,13 @@ if __name__ == '__main__':
 
     # partition the data into training and testing splits using 80% of
     # the data for training and the remaining 20% for testing
-    split = int(0.50 * len(image_paths))
+    split = int(0.80 * len(image_paths))
     train_filenames = image_paths[:split]
     eval_filenames = image_paths[split:]
 
     if not (os.path.exists(os.path.join(args.output_dir, "train"))):
         os.mkdir(os.path.join(args.output_dir, "train"))
-        os.mkdir(os.path.join(args.output_dir, "test"))
+        os.mkdir(os.path.join(args.output_dir, "eval"))
 
     classes_list = os.listdir(data_dir)
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     # Preprocess train, dev and test
     idx = 0
     train_dir = os.path.join(args.output_dir, "train")
-    test_dir = os.path.join(args.output_dir, "test")
+    test_dir = os.path.join(args.output_dir, "eval")
     for c in classes_list:
         output_train_dir_split = os.path.join(train_dir, c)
         if not os.path.exists(output_train_dir_split):

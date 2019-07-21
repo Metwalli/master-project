@@ -10,6 +10,7 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.models import load_model
 import time
 import os
+from keras.utils.training_utils import multi_gpu_model
 import tensorflow as tf
 import keras.backend as K
 import math
@@ -56,7 +57,7 @@ params = Params(os.path.join(model_dir, 'params.json'))
 
 # config variables
 LAMBDA = 0.5
-CENTER_LOSS_ALPHA = 0.5
+CENTER_LOSS_ALPHA = 0.01
 LOSS_FN = params.loss_fn
 EPOCHS = params.num_epochs
 INIT_LR = params.learning_rate

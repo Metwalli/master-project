@@ -10,6 +10,7 @@ import os
 import functools
 import numpy as np
 import pandas as pd
+from keras.preprocessing.image import ImageDataGenerator
 # from dense_inception import DenseNetInception
 from utils import Params
 # import pickle
@@ -56,8 +57,9 @@ test_generator = test_datagen.flow_from_directory(
         test_dir,
         target_size=(IMAGE_DIMS[1], IMAGE_DIMS[1]),
         batch_size=BS,
+        shuffle=False,
         class_mode='categorical')
-
+test_generator.filenames[0]
 CLASSES = test_generator.num_classes
 params.num_labels = CLASSES
 
